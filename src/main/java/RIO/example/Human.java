@@ -1,4 +1,4 @@
-package org.example;
+package RIO.example;
 
 public class Human {
         private String name;

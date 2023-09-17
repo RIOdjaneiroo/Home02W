@@ -12,7 +12,87 @@ repositories {
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.9.1')
     testImplementation 'org.junit.jupiter:junit-jupiter'
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.15.0'
 }
+apply plugin: 'java'
+
+jar {
+    duplicatesStrategy = 'exclude'
+}
+
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+
+jar {
+    manifest {
+        attributes "Main-Class": "RIO.example.Main"
+    }
+
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+task customFatJar(type: Jar){
+    manifest{
+        attributes 'Main-Class': 'RIO.example.Main'
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from {configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+    doLast {
+        System.out.println("Jar is complited")
+    }
+}
+
+
+
+tasks.register("removeFolder"){
+    delete 'dist'
+    doLast {
+        System.out.println("Folder DIST successufuly deleted!");
+    }
+}
+
+tasks.register("createFolder"){
+    doFirst {
+        System.out.println("Start to create folder DIST");
+    }
+    mkdir 'dist'
+    doLast {
+        System.out.println("Folder DIST successufuly created!");
+    }
+}
+//task copySource (type: Copy){
+//    doFirst {
+//        System.out.println("Copy Readmy.txt");
+//    }
+//    from './Readmy.txt'
+//    into 'dist'
+//
+//    doLast {
+//        System.out.println("Source.txt successufuly copied!");
+//    }
+//}
+
+task copyJar(type: Copy) {
+    from 'build/libs/Home02W-1.0-SNAPSHOT.jar'
+    into 'dist'
+    rename 'Home02W-1.0-SNAPSHOT.jar', 'myname.jar'
+}
+
+task runWithExecJarExecutable(type: Exec){
+    group = "Execution"
+    description = "Run the output executable jar with ExecTask"
+    commandLine "java", "-jar", "dist/myname.jar"
+}
+
+removeFolder.dependsOn(customFatJar)
+createFolder.dependsOn(removeFolder)
+copyJar.dependsOn(createFolder)
+
 
 test {
     useJUnitPlatform()
